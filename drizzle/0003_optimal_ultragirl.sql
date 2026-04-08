@@ -1,0 +1,1 @@
+ALTER TABLE `analysis_snapshots` ADD `upph` decimal(10,4);

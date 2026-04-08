@@ -1,0 +1,21 @@
+CREATE TABLE `analysis_snapshots` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`productionLineId` int NOT NULL,
+	`name` varchar(255) NOT NULL,
+	`note` text,
+	`balanceRate` decimal(6,2) NOT NULL,
+	`balanceLoss` decimal(6,2) NOT NULL,
+	`totalTime` decimal(10,2) NOT NULL,
+	`maxTime` decimal(10,2) NOT NULL,
+	`minTime` decimal(10,2) NOT NULL,
+	`avgTime` decimal(10,2) NOT NULL,
+	`workstationCount` int NOT NULL,
+	`totalManpower` int NOT NULL,
+	`taktTime` decimal(10,2),
+	`taktPassRate` decimal(6,2),
+	`taktPassCount` int,
+	`workstationsData` json NOT NULL,
+	`bottleneckName` varchar(255),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `analysis_snapshots_id` PRIMARY KEY(`id`)
+);
