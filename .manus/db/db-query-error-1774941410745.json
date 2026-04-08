@@ -1,8 +1,0 @@
-{
-  "query": "ALTER TABLE `analysis_snapshots` ADD `upph` decimal(10,4);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2JDPhnCVLnCvtJK.root --database Qis8h2RcJ6pmBTDNav9UEk --execute ALTER TABLE `analysis_snapshots` ADD `upph` decimal(10,4);",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1060 (42S21) at line 1: Duplicate column name 'upph'"
-  ]
-}
