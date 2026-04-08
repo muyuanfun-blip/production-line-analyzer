@@ -4,28 +4,6 @@
     {
       "src": "dist/index.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "dist/public/**",
-      "use": "static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/dist/index.js"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "/dist/public/assets/$1"
-    },
-    {
-      "src": "/__manus__/(.*)",
-      "dest": "/dist/public/__manus__/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/dist/public/$1"
     }
   ]
 }
