@@ -1,5 +1,6 @@
 import { eq, asc, desc } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import {
   InsertUser, users,
   productionLines, InsertProductionLine,
@@ -10,11 +11,13 @@ import {
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _sql: ReturnType<typeof postgres> | null = null;
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db && ENV.databaseUrl) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _sql = postgres(ENV.databaseUrl);
+      _db = drizzle(_sql);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -28,24 +31,15 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   const db = await getDb();
   if (!db) { console.warn("[Database] Cannot upsert user: database not available"); return; }
   try {
-    const values: InsertUser = { openId: user.openId };
-    const updateSet: Record<string, unknown> = {};
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-    textFields.forEach(assignNullable);
-    if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
-    if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; }
-    else if (user.openId === ENV.ownerOpenId) { values.role = 'admin'; updateSet.role = 'admin'; }
-    if (!values.lastSignedIn) values.lastSignedIn = new Date();
-    if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
-    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+    await db.insert(users).values(user).onConflictDoUpdate({
+      target: users.openId,
+      set: {
+        name: user.name ?? null,
+        email: user.email ?? null,
+        loginMethod: user.loginMethod ?? null,
+        lastSignedIn: user.lastSignedIn ?? new Date(),
+      }
+    });
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
@@ -77,7 +71,7 @@ export async function getProductionLineById(id: number) {
 export async function createProductionLine(data: InsertProductionLine) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(productionLines).values(data);
+  const result = await db.insert(productionLines).values(data).returning();
   return result;
 }
 
@@ -119,7 +113,7 @@ export async function getWorkstationById(id: number) {
 export async function createWorkstation(data: InsertWorkstation) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.insert(workstations).values(data);
+  return db.insert(workstations).values(data).returning();
 }
 
 export async function updateWorkstation(id: number, data: Partial<InsertWorkstation>) {
@@ -155,7 +149,7 @@ export async function getActionStepsByWorkstation(workstationId: number) {
 export async function createActionStep(data: InsertActionStep) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.insert(actionSteps).values(data);
+  return db.insert(actionSteps).values(data).returning();
 }
 
 export async function updateActionStep(id: number, data: Partial<InsertActionStep>) {
@@ -198,7 +192,7 @@ export async function getSnapshotById(id: number) {
 export async function createSnapshot(data: InsertAnalysisSnapshot) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.insert(analysisSnapshots).values(data);
+  return db.insert(analysisSnapshots).values(data).returning();
 }
 
 export async function deleteSnapshot(id: number) {
@@ -208,7 +202,7 @@ export async function deleteSnapshot(id: number) {
 }
 
 /**
- * 取得所有產線的最新快照摘要（用於首頁並排比較圖表）
+ * 取得所有產線的快照歷史（用於首頁歷史趨勢圖表）
  */
 export async function getAllLinesSnapshotHistory() {
   const db = await getDb();
@@ -246,6 +240,9 @@ export async function getAllLinesSnapshotHistory() {
   return results.filter((r) => r.snapshots.length > 0);
 }
 
+/**
+ * 取得所有產線的最新快照摘要（用於首頁並排比較圖表）
+ */
 export async function getAllLinesLatestSnapshot() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
