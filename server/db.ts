@@ -58,7 +58,7 @@ export async function getUserByOpenId(openId: string) {
 export async function getAllProductionLines() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(productionLines).orderBy(desc(productionLines.createdAt));
+  return db.select().from(productionLines);
 }
 
 export async function getProductionLineById(id: number) {
