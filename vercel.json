@@ -2,6 +2,12 @@
   "version": 2,
   "installCommand": "pnpm install",
   "buildCommand": "pnpm run vercel-build",
+  "builds": [
+    {
+      "src": "dist/api/index.js",
+      "use": "@vercel/node"
+    }
+  ],
   "routes": [
     {
       "src": "/api/(.*)",
