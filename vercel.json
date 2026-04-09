@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "npm run vercel-build",
   "builds": [
     {
       "src": "dist/api/index.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "installCommand": "npm install --legacy-peer-deps"
+      }
     }
   ],
   "routes": [
