@@ -5,7 +5,6 @@ import fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Vercel Serverless Function
 import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
@@ -18,6 +17,24 @@ const app = express();
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// Debug endpoint
+app.get("/api/debug", async (req, res) => {
+  const { getDb } = await import("../server/db");
+  const db = await getDb();
+  if (!db) {
+    res.json({ status: "no db", env: !!process.env.DATABASE_URL });
+    return;
+  }
+  try {
+    const { sql } = await import('drizzle-orm');
+    const { productionLines } = await import('../drizzle/schema');
+    const result = await db.select().from(productionLines).limit(1);
+    res.json({ status: "ok", rows: result.length });
+  } catch (e: any) {
+    res.json({ status: "error", message: e.message, code: e.code, cause: e.cause?.message });
+  }
+});
 
 registerOAuthRoutes(app);
 
