@@ -2,7 +2,6 @@
   "version": 2,
   "framework": null,
   "buildCommand": "npm run vercel-build",
-  "outputDirectory": "dist/public",
   "installCommand": "npm install --legacy-peer-deps",
   "builds": [
     {
@@ -17,7 +16,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/dist/public/$1"
+      "dest": "/dist/api/index.js"
     }
   ]
 }

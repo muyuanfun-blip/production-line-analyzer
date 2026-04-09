@@ -27,7 +27,7 @@ app.use("/api/trpc", createExpressMiddleware({
 }));
 
 // Serve static files from dist/public
-const DIST_PATH = path.resolve(__dirname, "..", "dist", "public");
+const DIST_PATH = path.resolve(__dirname, "..", "public");
 app.use(express.static(DIST_PATH));
 
 // SPA fallback
