@@ -3,5 +3,21 @@
   "framework": null,
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist/public",
-  "installCommand": "npm install --legacy-peer-deps"
+  "installCommand": "npm install --legacy-peer-deps",
+  "builds": [
+    {
+      "src": "dist/api/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/dist/api/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/public/$1"
+    }
+  ]
 }
