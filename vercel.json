@@ -1,18 +1,4 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "server/_core/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "zeroConfig": true
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/server/_core/index.ts"
-    }
-  ]
+  "installCommand": "pnpm install"
 }
