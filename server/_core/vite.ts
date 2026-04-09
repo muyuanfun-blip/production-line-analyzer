@@ -1,69 +1,65 @@
 import express, { type Express } from "express";
 import fs from "fs";
-import { type Server } from "http";
-import { nanoid } from "nanoid";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 
-export async function setupVite(app: Express, server: Server) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server },
-    allowedHosts: true as const,
-  };
-
+// setupVite is only used in development
+export async function setupVite(app: Express, server: any) {
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL === "true") {
+    throw new Error("setupVite should not be called in production");
+  }
+  
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
-    server: serverOptions,
+    server: {
+      middlewareMode: true,
+      allowedHosts: true,
+    },
     appType: "custom",
   });
-
+  
   app.use(vite.middlewares);
+  
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
-
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "../..",
-        "client",
-        "index.html"
-      );
-
-      // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`
+      let template = fs.readFileSync(
+        path.resolve(import.meta.dirname, "../client/index.html"),
+        "utf-8"
       );
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
-      vite.ssrFixStacktrace(e as Error);
       next(e);
     }
   });
 }
 
+// serveStatic for production - serves from dist/public
 export function serveStatic(app: Express) {
-  // Fix: Always use dist/public for production, regardless of NODE_ENV
-  const isProd = process.env.NODE_ENV === "production" || process.env.VERCEL === "true";
-  const distPath = isProd
-    ? path.resolve(import.meta.dirname, "..", "..", "dist", "public")
-    : path.resolve(import.meta.dirname, "..", "..", "dist", "public");
-    
-  if (!fs.existsSync(distPath)) {
-    console.error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
-    );
+  // When bundled, __dirname = dist/_core, so we go up 2 levels
+  const DIST_PATH = path.resolve(__dirname, "..", "..", "dist", "public");
+  
+  console.log(`[serveStatic] __dirname: ${__dirname}`);
+  console.log(`[serveStatic] DIST_PATH: ${DIST_PATH}`);
+  console.log(`[serveStatic] Exists: ${fs.existsSync(DIST_PATH)}`);
+  
+  if (!fs.existsSync(DIST_PATH)) {
+    console.error(`[serveStatic] ERROR: ${DIST_PATH} not found`);
+    console.error(`[serveStatic] __dirname contents:`, fs.readdirSync(path.resolve(__dirname, "..")));
+    console.error(`[serveStatic] Parent contents:`, fs.readdirSync(path.resolve(__dirname, "..", "..")));
   }
 
-  app.use(express.static(distPath));
+  app.use(express.static(DIST_PATH));
 
-  // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    const indexPath = path.resolve(DIST_PATH, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send("index.html not found");
+    }
   });
 }
