@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm run vercel-build",
+  "installCommand": "npm install",
+  "buildCommand": "npm run vercel-build",
   "builds": [
     {
       "src": "dist/api/index.js",
