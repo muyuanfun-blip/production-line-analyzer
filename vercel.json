@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "framework": null,
-  "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install --legacy-peer-deps",
   "builds": [
     {
       "src": "dist/api/index.js",
@@ -10,10 +7,6 @@
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/dist/api/index.js"
-    },
     {
       "src": "/(.*)",
       "dest": "/dist/api/index.js"
