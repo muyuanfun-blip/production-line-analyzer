@@ -16,8 +16,14 @@ let _sql: ReturnType<typeof postgres> | null = null;
 export async function getDb() {
   if (!_db && ENV.databaseUrl) {
     try {
-      _sql = postgres(ENV.databaseUrl, { ssl: 'require', max: 1 });
-      _db = drizzle(_sql);
+      _sql = postgres(ENV.databaseUrl, { 
+        ssl: 'require', 
+        max: 1,
+        idle_timeout: 20,
+        connect_timeout: 10,
+        types: { date: 1182, timestamptz: 1184 }
+      });
+      _db = drizzle(_sql, { logger: process.env.NODE_ENV === 'development' });
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
